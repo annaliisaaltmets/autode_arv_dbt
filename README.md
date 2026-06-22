@@ -101,7 +101,7 @@ Projekt sisaldab järgmisi teste.
 
 ## Projekti struktuur
 
-Kodutöö
+Kodutöö/
 ├── compose.yml
 ├── .env.example
 ├── Dockerfile.dbt
@@ -113,24 +113,24 @@ Kodutöö
 ├── tests/
 │   └── no_negative_count.sql
 │
-├── dbt_project/
-│   ├── dbt_project.yml
-│   ├── profiles.yml
-│   │
-│   ├── models/
-│   │   ├── staging/
-│   │   │   ├── stg_traffic.sql
-│   │   │   ├── stg_traffic.yml
-│   │   │   ├── stg_riigipuha.sql
-│   │   │   └── stg_riigipuha.yml
-│   │   │
-│   │   ├── intermediate/
-│   │   │   ├── int_traffic.sql
-│   │   │   └── int_traffic.yml
-│   │   │
-│   │   └── marts/
-│   │       ├── mart_avg_weekday_cars.sql
-│   │       └── mart_avg_weekday_cars.yml
+└── dbt_project/
+    ├── dbt_project.yml
+    ├── profiles.yml
+    │
+    └── models/
+        ├── staging/
+        │   ├── stg_traffic.sql
+        │   ├── stg_traffic.yml
+        │   ├── stg_riigipuha.sql
+        │   └── stg_riigipuha.yml
+        │
+        ├── intermediate/
+        │   ├── int_traffic.sql
+        │   └── int_traffic.yml
+        │
+        └── marts/
+            ├── mart_avg_weekday_cars.sql
+            └── mart_avg_weekday_cars.yml
 
 ## Käivitamine
 
