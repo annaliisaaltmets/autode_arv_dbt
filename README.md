@@ -1,128 +1,175 @@
-# [GRUPI NIMI] — [PROJEKTI PEALKIRI]
+# Keskmine autode arv tööpäevadel
 
-> **Juhend:** Asenda kõik nurksulgudes vormid oma sisuga enne esitamist. Kustuta see juhendrida.
+## Ülevaade
+
+Antud projekt modelleerib liiklusandmeid Valukoja–Lõõtsa ristmikult kasutades dbt-d ja PostgreSQL andmebaasi.
+
+Eesmärk on vastata äriküsimusele:
+
+Mitu autot liigub keskmiselt nädalas tööpäevadel läbi Valukoja–Lõõtsa ristmiku?
+
+Lisaks keskmisele arvutatakse ka mediaan, et vähendada üksikute väga suure liiklusmahuga päevade mõju tulemusele.
 
 ## Äriküsimus
 
-[Kirjelda ühe-kahe lausega, millise andmetega seotud probleemi te lahendate ja kes sellest kasu saab.]
+Analüüsi eesmärk on hinnata ristmiku liiklusintensiivsust tööpäevadel.
 
-**Mõõdikud:**
+Lõpptulemusena luuakse mart-tabel, mis sisaldab:
 
-1. [Esimene KPI või mõõdik — näiteks: päevane müük poe kohta]
-2. [Teine KPI või mõõdik]
-3. [Kolmas KPI või mõõdik — vabatahtlik]
+- nädala alguskuupäeva (week_start)
+- keskmist tööpäevast autode arvu (avg_vehicle_count)
+- mediaanset tööpäevast autode arvu (median_vehicle_count)
+
+## Eeldused
+
+Liiklusintensiivsuse mõõtmiseks kasutati välja count, mitte unique_count.
+
+Põhjendus:
+
+- count näitab kõiki sõidukite läbimisi ristmikul; 
+- sama sõiduki korduvad läbimised mõjutavad samuti liikluskoormust;
+- eesmärk on mõõta liiklusmahtu, mitte unikaalsete sõidukite arvu.
+
+Analüüsist jäeti välja:
+
+- nädalavahetused;
+- Eesti riigipühad.
 
 ## Arhitektuur
 
-```mermaid
-flowchart LR
-    source[Andmeallikas] --> ingest[Sissevõtt]
-    ingest --> staging[(staging)]
-    staging --> transform[Transformatsioon]
-    transform --> mart[(mart)]
-    mart --> dashboard[Näidikulaud]
-```
+Projekt kasutab klassikalist dbt kihistust:
 
-Täpsem kirjeldus: [`docs/arhitektuur.md`](docs/arhitektuur.md)
+Seeds
+  ↓
+Staging
+  ↓
+Intermediate
+  ↓
+Mart
 
-## Andmestik
 
-| Allikas | Tüüp | Ajas muutuv? | Roll |
-|---------|------|--------------|------|
-| [Andmeallika nimi] | [API / fail / andmebaas] | Jah, [iga tund / päevas / muu] | Põhiandmevoog |
-| [Teise allika nimi] | [seed / dim-tabel] | Ei, staatiline | Kõrvaltabel |
+Toorandmed laetakse dbt seed mehhanismi abil CSV failidest.
 
-## Stack
+- lootsa_valukoja_02_2026.csv
+- dim_holidays.csv
+
+Staging kihis:
+
+- korrastatakse veerunimed;
+- määratakse andmetüübid;
+- tehakse minimaalsed puhastused.
+
+Intermediate kihis:
+
+- eemaldatakse nädalavahetused;
+- eemaldatakse riigipühad;
+
+Mart kihis arvutatakse ärimõõdikud ja filtreeritakse sõidukitüübid. Antud mudelis kasutatakse ainult tüüpi car. Kui äriküsimus muutub, siis saab teha vastavaid muudatusi. 
+
+## Tehniline stack
 
 | Komponent | Tööriist |
-|-----------|---------|
-| Sissevõtt | [Python / Airflow / muu] |
-| Transformatsioon | [SQL / dbt / muu] |
-| Andmehoidla | PostgreSQL |
-| Näidikulaud | [Superset / Streamlit / muu] |
-| Orkestreerimine | [Airflow / cron / muu] |
+|---------|------------|
+| **Andmebaas** | PostgreSQL (pgduckdb image) | 
+| **Transformatsioonid**| dbt|
+| **Konteinerid** | Docker |
+| **Andmekvaliteet** | dbt tests|
 
-## Käivitamine
+## Andmekvaliteet
 
-```bash
-# 1. Klooni repo ja liigu kausta
-git clone <repo-url>
-cd <projekti-kaust>
+Projekt sisaldab järgmisi teste.
 
-# 2. Kopeeri keskkonnamuutujad
-cp .env.example .env
-# Muuda .env failis paroolid ja muud seaded vastavalt vajadusele
+### stg_traffic: 
+- NULL väärtuseid ei tohi olla 
+- direction väärtus peab olema A või B
+- sama liiklussündmus ei tohi esineda mitu korda
 
-# 3. Käivita teenused
-docker compose up -d --build
+### stg_holidays: 
+- holiday_date ei tohi olla NULL
+- holiday_date peab olema unikaalne
 
-# 4. [Vabatahtlik: käivita sissevõtt käsitsi esimesel korral]
-# docker compose exec pipeline python scripts/run_pipeline.py run-all
-```
+### int_traffic: 
+- NULL väärtusi ei tohi olla 
+- direction väärtus peab olema A või B
 
-Airflow (kui kasutatakse): http://localhost:8080 (kasutaja: airflow / parool: airflow)
-Näidikulaud: http://localhost:[PORT]
+### mart_avg_weekday_cars: 
+- NULL väärtusi ei tohi olla 
 
-## Saladused ja konfiguratsioon
+### Custom testid
+- liiklusloenduri väärtus ei tohi olla negatiivne
 
-Kõik saladused (paroolid, API võtmed, andmebaasi URL-id) on `.env` failis. Repos on ainult `.env.example`, mis näitab vajalike muutujate struktuuri ilma tegelike väärtusteta. Päris `.env` faili ei tohi GitHubi panna - see on `.gitignore`-s.
-
-Vajalikud muutujad:
-
-| Muutuja | Tähendus | Näide |
-|---------|----------|-------|
-| `DB_PASSWORD` | PostgreSQL parool | (saladus) |
-| `[teised]` | ... | ... |
-
-## Andmevoog lühidalt
-
-1. **Sissevõtt** — [Kirjelda, kuidas andmed allikast kätte saadakse]
-2. **Laadimine** — Andmed laaditakse `staging` kihti
-3. **Transformatsioon** — [Kirjelda peamised arvutused ja mudelid]
-4. **Testimine** — [Mitu] andmekvaliteedi testi kontrollivad korrektsust
-5. **Näidikulaud** — [Kirjelda lühidalt, mida näidikulaud näitab]
-
-## Andmekvaliteedi testid
-
-Projekt kontrollib järgmist:
-
-1. [Test 1 - nt: kasutajate ID on unikaalne]
-2. [Test 2 - nt: tellimuse summa pole null]
-3. [Test 3 - nt: kuupäev jääb vahemikku 2020-2026]
-[Lisa rohkem, kui sul on]
-
-Testide tulemused: [kuhu salvestatakse / kuidas vaadata]
 
 ## Projekti struktuur
 
-```
-.
-├── README.md
+Kodutöö
 ├── compose.yml
 ├── .env.example
-├── .gitignore
-├── docs/
-│   ├── arhitektuur.md      ← nädal 1 väljund
-│   └── progress.md         ← nädal 2 väljund
-└── ...                     ← ülejäänud projektifailid
+├── Dockerfile.dbt
+│
+├── seeds/
+│   ├── lootsa_valukoja_02_2026.csv
+│   └── dim_holidays.csv
+│
+├── tests/
+│   └── no_negative_count.sql
+│
+├── dbt_project/
+│   ├── dbt_project.yml
+│   ├── profiles.yml
+│   │
+│   ├── models/
+│   │   ├── staging/
+│   │   │   ├── stg_traffic.sql
+│   │   │   ├── stg_traffic.yml
+│   │   │   ├── stg_riigipuha.sql
+│   │   │   └── stg_riigipuha.yml
+│   │   │
+│   │   ├── intermediate/
+│   │   │   ├── int_traffic.sql
+│   │   │   └── int_traffic.yml
+│   │   │
+│   │   └── marts/
+│   │       ├── mart_avg_weekday_cars.sql
+│   │       └── mart_avg_weekday_cars.yml
+
+## Käivitamine
+
+### 1. Kopeeri .env
+
+ ```bash
+cp .env.example .env
+```
+### 2. Käivita konteinerid
+
+```bash
+docker compose up -d
+```
+### 3. Lae seed andmed 
+
+```bash
+docker compose exec dbt dbt seed
+```
+### 4. Käivita mudelid 
+
+```bash
+docker compose exec dbt dbt run --select +mart_avg_weekday_cars
 ```
 
-## Kokkuvõte, puudused ja võimalikud edasiarendused
+### 5. Päri andmeid martist 
 
-**Kokkuvõte:**
-- [Loetle, mis on lõpule viidud, mis töötab hästi]
+Lisatud limiit 5
 
-**Puudused:**
-- [Loetle ausalt, mis jäi tegemata - see ei mõjuta hinnet negatiivselt, vaid aitab hinnata]
+```bash
+docker compose exec db psql -U projekt -d projekt -c "SELECT * FROM public_marts.mart_avg_weekday_cars LIMIT 5"
+```
+## Keskkonna sulgemine
 
-**Mis edasi:**
-- [Mida tahaksid edasi teha, kui aega oleks rohkem]
+```bash
+# Peata konteinerid
+docker compose down
 
-## Meeskond
+# Peata konteinerid JA kustuta andmed (andmebaasi sisu kaob)
+docker compose down -v
+```
 
-| Nimi | Roll |
-|------|------|
-| [Nimi 1] | [Roll] |
-| [Nimi 2] | [Roll] |
-| [Nimi 3] | [Roll] |
-| [Nimi 4] | [Roll — vabatahtlik] |
+
