@@ -1,0 +1,26 @@
+version: 2
+
+models:
+
+  - name: stg_riigipuha
+    description: "Eesti riigipühad"
+
+    columns:
+
+      - name: holiday_date
+        description: "Pühade kuupäev"
+        type: date
+        tests:
+          - not_null
+
+      - name: holiday_name
+        description: "Pühade nimetus"
+        type: text
+        tests:
+          - not_null
+
+      - name: holiday_type
+        description: "Pühade tüüp"
+        type: text
+        tests:
+          - not_null

@@ -1,0 +1,48 @@
+services:
+
+  db:
+    image: pgduckdb/pgduckdb:18-v1.1.1
+    container_name: traffic_postgres
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 10s
+
+  dbt:
+    build:
+      context: .
+      dockerfile: Dockerfile.dbt
+    container_name: traffic_dbt
+    entrypoint: ["/bin/bash"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DBT_PROFILES_DIR: /dbt
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    env_file:
+      - .env
+    volumes:
+      - ./dbt_project:/dbt
+    working_dir: /dbt
+    tty: true
+    command: ["-c", "while true; do sleep 3600; done"]
+
+volumes:
+  pgdata:

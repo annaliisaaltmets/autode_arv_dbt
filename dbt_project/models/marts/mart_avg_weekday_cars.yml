@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: mart_avg_weekday_cars
+    description: "Keskmine tööpäevane autode arv nädala lõikes. Arvesse lähevad ainult sõidukid klassifikatsiooniga 'car' ning tööpäevad, mis ei ole riigipühad."
+
+    columns:
+
+      - name: week_start
+        description: "Nädala alguskuupäev (esmaspäev)"
+        type: date
+        tests:
+          - not_null
+          - unique
+
+      - name: avg_daily_cars
+        description: "Nädala tööpäevade keskmine päevane autode arv."
+        type: numeric
+        tests:
+          - not_null
+      
+      - name: median_weekly_cars
+        description: "Nädala tööpäevade mediaan päevane autode arv."
+        type: numeric
+        tests:
+          - not_null

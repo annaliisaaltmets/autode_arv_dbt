@@ -1,0 +1,61 @@
+version: 2
+
+models:
+
+  - name: stg_traffic
+    description: "Puhastatud liiklusandmed Valukoja–Lõõtsa ristmikult"
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - event_ts
+            - camera_name
+            - vehicle_type
+            - line
+            - direction
+
+    columns:
+
+      - name: event_ts
+        description: "Sündmuse ajatempli väärtus"
+        type: timestamp
+        tests:
+          - not_null
+
+      - name: camera_name
+        description: "Kaamera nimi"
+        type: text
+        tests:
+          - not_null
+
+      - name: vehicle_type
+        description: "Sõiduki tüüp (car, bus jne)"
+        type: text
+        tests:
+          - not_null
+
+      - name: line
+        description: "Mõõtejoon / ristmiku segment"
+        type: text
+        tests:
+          - not_null
+
+      - name: vehicle_count
+        description: "Sõidukite koguarv"
+        type: integer
+        tests:
+          - not_null
+
+      - name: unique_count
+        description: "Unikaalsete sõidukite arv"
+        type: integer
+        tests:
+          - not_null
+
+      - name: direction
+        description: "Liikumissuund (A / B)"
+        type: text
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["A", "B"]

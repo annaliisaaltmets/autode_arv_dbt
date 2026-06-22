@@ -1,0 +1,70 @@
+version: 2
+
+models:
+  - name: int_traffic_enriched
+    description: 
+      "Liiklusandmed rikastatud kalendriatribuutide,
+      riigipühade ja tööpäeva tunnusega."
+
+    columns:
+
+      - name: event_ts
+        description: "Algne sündmuse ajatempel"
+        type: timestamp
+        tests:
+          - not_null
+
+      - name: event_date
+        description: "Sündmuse kuupäev"
+        type: date
+        tests:
+          - not_null
+
+      - name: week_start
+        description: "Nädala alguskuupäev (esmaspäev)"
+        type: date
+        tests:
+          - not_null
+
+      - name: weekday
+        description: "ISO nädalapäev (1=E, 7=P)"
+        type: integer
+        tests:
+          - not_null
+
+      - name: is_holiday
+        description: "Kas kuupäev on riigipüha"
+        type: boolean
+        tests:
+          - not_null
+
+      - name: is_workday
+        description: "Kas tegemist on tööpäevaga (E-R ja mitte riigipüha)"
+        type: boolean
+        tests:
+          - not_null
+
+      - name: camera_name
+        description: "Kaamera nimi"
+        tyoe: text
+        tests:
+          - not_null
+
+      - name: vehicle_type
+        description: "Sõiduki tüüp"
+        type: text
+        tests:
+          - not_null
+
+      - name: direction
+        description: "Liikumissuund"
+        type: text
+        tests:
+          - accepted_values:
+              values: ['A', 'B']
+
+      - name: unique_count
+        description: "Unikaalsete sõidukite arv"
+        type: integer
+        tests:
+          - not_null
