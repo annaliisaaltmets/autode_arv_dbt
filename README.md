@@ -101,6 +101,7 @@ Projekt sisaldab järgmisi teste.
 
 ## Projekti struktuur
 
+```
 Kodutöö/
 ├── compose.yml
 ├── .env.example
@@ -131,6 +132,7 @@ Kodutöö/
         └── marts/
             ├── mart_avg_weekday_cars.sql
             └── mart_avg_weekday_cars.yml
+```
             
 ## Käivitamine
 
