@@ -1,3 +1,3 @@
 select *
 from {{ ref('stg_traffic') }}
-where count < 0
+where vehicle_count < 0
